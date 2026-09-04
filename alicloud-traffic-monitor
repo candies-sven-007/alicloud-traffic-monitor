@@ -1,0 +1,24 @@
+#!/sbin/openrc-run
+# OpenRC service definition for alicloud-traffic-monitor
+
+name="Alibaba Cloud Traffic Monitor"
+description="Alibaba Cloud ECS public egress traffic monitor"
+
+command="/usr/local/sbin/alicloud-traffic-monitor"
+command_args="run"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+
+depend() {
+    need localmount net
+    after firewall
+    before sing-box
+}
+
+start_pre() {
+    checkpath --directory --mode 0700 /var/lib/alicloud-traffic-monitor
+    if [ ! -f /etc/alicloud-traffic-monitor.conf ]; then
+        eerror "配置文件 /etc/alicloud-traffic-monitor.conf 不存在！"
+        return 1
+    fi
+}
