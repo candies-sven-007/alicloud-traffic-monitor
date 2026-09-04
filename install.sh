@@ -1,6 +1,6 @@
 #!/bin/sh
 # ==============================================================================
-# alicloud-traffic-monitor 安装与运维管理脚本
+# alicloud-traffic-monitor 安装与运维管理脚本 (支持 Raw 一键部署)
 # ==============================================================================
 
 set -u
@@ -11,6 +11,11 @@ INIT="/etc/init.d/$APP"
 CONF="/etc/$APP.conf"
 STATE_DIR="/var/lib/$APP"
 LOG="$STATE_DIR/traffic.log"
+
+# GitHub 仓库配置 (用于 Raw 拉取)
+GITHUB_REPO="candies/alicloud-traffic-monitor"
+GITHUB_BRANCH="main"
+RAW_BASE="https://raw.githubusercontent.com/$GITHUB_REPO/$GITHUB_BRANCH"
 
 check_root() {
     if [ "$(id -u)" -ne 0 ]; then
@@ -24,27 +29,25 @@ install() {
     echo "=== 开始安装 Alibaba Cloud ECS 出站流量保护器 ==="
 
     apk update
-    apk add --no-cache curl awk coreutils ca-certificates git
+    apk add --no-cache curl awk coreutils ca-certificates
 
     mkdir -p "$STATE_DIR"
     chmod 700 "$STATE_DIR"
     touch "$LOG"
 
-    # 安装二进制执行文件
+    echo "正在获取核心组件..."
+    # 优先使用本地文件，若不存在则从 GitHub Raw 拉取
     if [ -f "alicloud-traffic-monitor.sh" ]; then
         cp alicloud-traffic-monitor.sh "$BIN"
     else
-        echo "错误：未在当前目录找到 alicloud-traffic-monitor.sh"
-        exit 1
+        curl -sSL "$RAW_BASE/alicloud-traffic-monitor.sh" -o "$BIN"
     fi
     chmod 755 "$BIN"
 
-    # 安装 OpenRC 服务脚本
     if [ -f "openrc/alicloud-traffic-monitor" ]; then
         cp openrc/alicloud-traffic-monitor "$INIT"
     else
-        echo "错误：未在当前目录找到 openrc/alicloud-traffic-monitor"
-        exit 1
+        curl -sSL "$RAW_BASE/openrc/alicloud-traffic-monitor" -o "$INIT"
     fi
     chmod 755 "$INIT"
 
@@ -95,23 +98,21 @@ EOF
 update() {
     check_root
     echo "=== 开始拉取最新代码并热更新 ==="
+    
     if [ -d ".git" ]; then
+        echo "检测到本地 Git 仓库，执行 git pull..."
         git fetch --all
-        git reset --hard origin/main
-    else
-        echo "当前目录非 Git 仓库，跳过 git pull。"
-    fi
-
-    if [ -f "alicloud-traffic-monitor.sh" ]; then
+        git reset --hard origin/$GITHUB_BRANCH
         cp alicloud-traffic-monitor.sh "$BIN"
-        chmod 755 "$BIN"
-    fi
-
-    if [ -f "openrc/alicloud-traffic-monitor" ]; then
         cp openrc/alicloud-traffic-monitor "$INIT"
-        chmod 755 "$INIT"
+    else
+        echo "非 Git 环境，通过 GitHub Raw 链接拉取最新版..."
+        curl -sSL "$RAW_BASE/alicloud-traffic-monitor.sh" -o "$BIN"
+        curl -sSL "$RAW_BASE/openrc/alicloud-traffic-monitor" -o "$INIT"
     fi
-
+    
+    chmod 755 "$BIN"
+    chmod 755 "$INIT"
     rc-service "$APP" restart
     echo "✅ 热更新成功！当前运行版本已重载。"
 }
@@ -142,23 +143,10 @@ uninstall() {
 }
 
 case "${1:-}" in
-    install)
-        install
-        ;;
-    update)
-        update
-        ;;
-    status)
-        "$BIN" status
-        ;;
-    test)
-        "$BIN" test
-        ;;
-    uninstall)
-        uninstall
-        ;;
-    *)
-        echo "用法: $0 {install|update|status|test|uninstall}"
-        exit 1
-        ;;
+    install) install ;;
+    update) update ;;
+    status) "$BIN" status ;;
+    test) "$BIN" test ;;
+    uninstall) uninstall ;;
+    *) echo "用法: $0 {install|update|status|test|uninstall}"; exit 1 ;;
 esac
