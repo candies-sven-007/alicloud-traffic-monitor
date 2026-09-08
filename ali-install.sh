@@ -3,13 +3,13 @@
 # 
 #  ┌─────────────────────────────────────────────────────────────────────────┐
 #  │                                                                         │
-#  │   Alibaba Cloud ECS Outbound Traffic Monitor v2.0.0 Pro Edition        │
-#  │   阿里云ECS出站流量监控脚本 - 超级完整版本                            │
+#  │   Alibaba Cloud ECS Outbound Traffic Monitor v2.0.0 Pro Edition         │
+#  │   阿里云ECS出站流量监控脚本 - 超级完整版本                                 │
 #  │                                                                         │
-#  │   Author  : Candies-Sven (黄山)                                        │
-#  │   Repo    : https://github.com/candies-sven-007/alicloud-traffic-mon.. │
-#  │   License : MIT License                                                │
-#  │   Version : 2.0.0 Pro                                                  │
+#  │   Author  : Candies-Sven                                                │
+#  │   Repo    : https://github.com/candies-sven-007/alicloud-traffic-mon..  │
+#  │   License : MIT License                                                 │
+#  │   Version : 2.0.0 Pro                                                   │
 #  │                                                                         │
 #  └─────────────────────────────────────────────────────────────────────────┘
 #
